@@ -1,6 +1,11 @@
+# -*- coding: utf-8 -*-
 """
 Bot VIP Telegram - Gerenciamento de Assinaturas
 """
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 import logging
 from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -77,6 +82,38 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == 'minha_assinatura':
         await mostrar_assinatura(query, user_id)
     
+    elif query.data == 'voltar_inicio':
+        # Mostra o menu inicial novamente
+        keyboard = [
+            [InlineKeyboardButton("📸 Plano Fotos - R$ {:.2f}".format(config.PLANO_FOTOS['valor']), 
+                                 callback_data='plano_fotos')],
+            [InlineKeyboardButton("🎬 Plano Completo - R$ {:.2f}".format(config.PLANO_COMPLETO['valor']), 
+                                 callback_data='plano_completo')],
+            [InlineKeyboardButton("ℹ️ Minha Assinatura", callback_data='minha_assinatura')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        mensagem = """
+🌟 Bem-vindo ao Bot VIP! 🌟
+
+Escolha seu plano e tenha acesso ao conteúdo exclusivo:
+
+📸 *Plano Fotos VIP* - R$ {:.2f}/mês
+   • Acesso a todas as fotos exclusivas
+   • Conteúdo atualizado diariamente
+   • Suporte prioritário
+
+🎬 *Plano Completo VIP* - R$ {:.2f}/mês
+   • Tudo do Plano Fotos +
+   • Acesso a vídeos exclusivos
+   • Conteúdo em alta qualidade
+   • Lançamentos antecipados
+
+Selecione uma opção abaixo:
+""".format(config.PLANO_FOTOS['valor'], config.PLANO_COMPLETO['valor'])
+        
+        await query.edit_message_text(mensagem, reply_markup=reply_markup, parse_mode='Markdown')
+    
     elif query.data.startswith('renovar_'):
         plano = query.data.split('_')[1]
         await processar_escolha_plano(query, user_id, username, nome, plano)
@@ -88,11 +125,20 @@ async def processar_escolha_plano(query, user_id, username, nome, plano_tipo):
         # Gera link de pagamento
         resultado = gerar_link_pagamento(user_id, username, plano_tipo)
         
+        # Valida se o link foi gerado
+        if not resultado or not resultado.get('url'):
+            await query.edit_message_text(
+                "❌ Erro ao gerar link de pagamento.\n\n"
+                "⚠️ Verifique se o Mercado Pago está configurado corretamente.\n\n"
+                "💡 Dica: Se estiver usando TOKEN DE TESTE, certifique-se de que está correto."
+            )
+            return
+        
         plano_info = config.PLANO_FOTOS if plano_tipo == 'fotos' else config.PLANO_COMPLETO
         
         keyboard = [
             [InlineKeyboardButton("💳 Pagar Agora", url=resultado['url'])],
-            [InlineKeyboardButton("« Voltar", callback_data='start')]
+            [InlineKeyboardButton("« Voltar", callback_data='voltar_inicio')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         

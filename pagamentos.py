@@ -44,14 +44,17 @@ class GerenciadorPagamentos:
                 "name": username or f"Usuario_{telegram_id}",
                 "email": f"user{telegram_id}@telegram.bot"  # Email fictício
             },
-            "external_reference": f"{telegram_id}_{plano_tipo}",  # Identificador único
-            "notification_url": "https://seu-webhook.com/webhook",  # Webhook para notificações
+            "external_reference": f"{telegram_id}_{plano_tipo}",
+            "notification_url": "https://seu-webhook.com/webhook",
             "auto_return": "approved",
             "back_urls": {
-                "success": "https://t.me/seu_bot",
-                "failure": "https://t.me/seu_bot",
-                "pending": "https://t.me/seu_bot"
-            }
+                "success": "https://t.me/Robert_VIP_bot",
+                "failure": "https://t.me/Robert_VIP_bot",
+                "pending": "https://t.me/Robert_VIP_bot"
+            },
+            "statement_descriptor": "GRUPO VIP",
+            "binary_mode": False,  # Permite pagamentos pendentes (necessário para PIX)
+            "expires": False       # Não expira automaticamente
         }
         
         # Cria a preferência

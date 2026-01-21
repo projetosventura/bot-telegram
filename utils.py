@@ -1,6 +1,11 @@
+# -*- coding: utf-8 -*-
 """
 Utilitários e funções auxiliares
 """
+import sys
+import io
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+
 import logging
 from telegram import Bot
 from telegram.error import TelegramError

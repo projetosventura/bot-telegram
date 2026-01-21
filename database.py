@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Gerenciamento do Banco de Dados
 """
@@ -6,6 +7,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime, timedelta
 import config
+
+def safe_print(text):
+    """Print seguro que funciona no Windows"""
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        # Remove emojis se houver erro
+        print(text.encode('ascii', 'ignore').decode('ascii'))
 
 Base = declarative_base()
 engine = create_engine(config.DATABASE_URL)
@@ -67,7 +76,7 @@ class Pagamento(Base):
 def init_db():
     """Inicializa o banco de dados"""
     Base.metadata.create_all(engine)
-    print("✅ Banco de dados inicializado!")
+    safe_print("✅ Banco de dados inicializado!")
 
 
 def get_session():
