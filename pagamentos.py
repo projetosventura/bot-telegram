@@ -30,31 +30,34 @@ class GerenciadorPagamentos:
         else:
             plano = config.PLANO_COMPLETO
         
-        # Dados da preferência de pagamento
+        # Dados da preferência de pagamento (versão mínima para teste PIX)
         preference_data = {
             "items": [
                 {
+                    "id": f"{plano_tipo}_vip",
                     "title": plano['nome'],
+                    "description": f"Assinatura mensal do plano {plano['nome']} com acesso ao grupo VIP exclusivo",
+                    "category_id": "digital_content",
                     "quantity": 1,
                     "currency_id": "BRL",
                     "unit_price": plano['valor']
                 }
             ],
             "payer": {
-                "name": username or f"Usuario_{telegram_id}",
-                "email": f"user{telegram_id}@telegram.bot"  # Email fictício
+                "name": username or f"Usuario",
+                "surname": f"TG{telegram_id}",
+                "email": f"user{telegram_id}@telegram.bot"
+            },
+            "payment_methods": {
+                "installments": 12
             },
             "external_reference": f"{telegram_id}_{plano_tipo}",
-            "notification_url": "https://seu-webhook.com/webhook",
-            "auto_return": "approved",
             "back_urls": {
                 "success": "https://t.me/Robert_VIP_bot",
                 "failure": "https://t.me/Robert_VIP_bot",
                 "pending": "https://t.me/Robert_VIP_bot"
             },
-            "statement_descriptor": "GRUPO VIP",
-            "binary_mode": False,  # Permite pagamentos pendentes (necessário para PIX)
-            "expires": False       # Não expira automaticamente
+            "binary_mode": False
         }
         
         # Cria a preferência
