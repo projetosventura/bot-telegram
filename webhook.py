@@ -85,9 +85,13 @@ def health():
 
 
 if __name__ == '__main__':
+    import os
+    
     # Inicializa banco de dados
     database.init_db()
     
-    # Inicia servidor (use gunicorn em produção)
-    # gunicorn -w 4 -b 0.0.0.0:5000 webhook:app
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    # Porta do Railway ou 5000 local
+    port = int(os.environ.get('PORT', 5000))
+    
+    # Inicia servidor
+    app.run(host='0.0.0.0', port=port, debug=False)
