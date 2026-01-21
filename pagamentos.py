@@ -52,6 +52,7 @@ class GerenciadorPagamentos:
                 "installments": 12
             },
             "external_reference": f"{telegram_id}_{plano_tipo}",
+            "notification_url": "https://bot-telegram-production-cf50.up.railway.app/webhook",
             "back_urls": {
                 "success": "https://t.me/Robert_VIP_bot",
                 "failure": "https://t.me/Robert_VIP_bot",
