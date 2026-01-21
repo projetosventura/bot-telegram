@@ -4,10 +4,18 @@ Configurações do Bot VIP Telegram
 import os
 from dotenv import load_dotenv
 
+# Carrega .env apenas se existir (local), ignora no Railway
 load_dotenv()
+
+# Debug: Print para ver se as variáveis estão sendo lidas
+print(f"DEBUG - TELEGRAM_BOT_TOKEN existe: {bool(os.getenv('TELEGRAM_BOT_TOKEN'))}")
+print(f"DEBUG - Primeiros caracteres: {os.getenv('TELEGRAM_BOT_TOKEN', '')[:10]}...")
 
 # Telegram
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+if not TELEGRAM_BOT_TOKEN:
+    raise ValueError("TELEGRAM_BOT_TOKEN não configurado!")
+    
 ADMIN_USER_ID = int(os.getenv('ADMIN_USER_ID', 0))
 GROUP_ID = int(os.getenv('GROUP_ID', 0))
 
