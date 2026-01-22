@@ -19,6 +19,9 @@ if not TELEGRAM_BOT_TOKEN:
 ADMIN_USER_ID = int(os.getenv('ADMIN_USER_ID', 0))
 GROUP_ID = int(os.getenv('GROUP_ID', 0))  # Grupo para conversa (opcional)
 
+# Grupo gratuito de prévias
+GRUPO_PREVIAS_ID = int(os.getenv('GRUPO_PREVIAS_ID', 0))  # Grupo free para marketing
+
 # Canais por plano
 CANAL_FOTOS_ID = int(os.getenv('CANAL_FOTOS_ID', 0))  # Canal de fotos (Plano Fotos e Completo)
 CANAL_COMPLETO_ID = int(os.getenv('CANAL_COMPLETO_ID', 0))  # Canal de vídeos (apenas Plano Completo)
@@ -82,4 +85,17 @@ MENSAGEM_VENCIDO = """
 Seu acesso ao grupo VIP foi removido pois sua assinatura venceu.
 
 Para voltar ao grupo, renove sua assinatura!
+"""
+
+MENSAGEM_BEM_VINDO_PREVIAS = """
+👋 Bem-vindo ao grupo de Prévias!
+
+🌟 Aqui você tem acesso a conteúdo gratuito, mas para ver TUDO, confira nossos planos VIP:
+
+💎 Use o comando /planos para ver as opções!
+
+📸 Plano Fotos VIP - R$ {plano_fotos}
+🎬 Plano Completo VIP - R$ {plano_completo}
+
+👉 Envie /start no privado do bot para assinar!
 """

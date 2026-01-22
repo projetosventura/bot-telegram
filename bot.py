@@ -199,6 +199,31 @@ async def mostrar_assinatura(query, user_id):
     await query.edit_message_text(mensagem, reply_markup=reply_markup, parse_mode='Markdown')
 
 
+async def planos(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Comando /planos - Mostra os planos disponíveis"""
+    mensagem = f"""
+💎 *PLANOS VIP DISPONÍVEIS*
+
+📸 *Plano Fotos VIP* - R$ {config.PLANO_FOTOS['valor']:.2f}/mês
+   • Acesso a todas as fotos exclusivas
+   • Conteúdo atualizado diariamente
+   • Suporte prioritário
+
+🎬 *Plano Completo VIP* - R$ {config.PLANO_COMPLETO['valor']:.2f}/mês
+   • Tudo do Plano Fotos +
+   • Acesso a vídeos exclusivos
+   • Conteúdo em alta qualidade
+   • Lançamentos antecipados
+
+💳 *Como assinar?*
+Envie /start no privado do bot para escolher seu plano e realizar o pagamento!
+
+👉 Clique aqui para iniciar: @{(await context.bot.get_me()).username}
+"""
+    
+    await update.message.reply_text(mensagem, parse_mode='Markdown')
+
+
 async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Comando admin para ver estatísticas (apenas para admins)"""
     if update.effective_user.id != config.ADMIN_USER_ID:
@@ -350,31 +375,47 @@ async def verificar_pagamento_manual(update: Update, context: ContextTypes.DEFAU
 
 async def novo_membro(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Gerencia novos membros no grupo"""
+    chat_id = update.effective_chat.id
+    
     for member in update.message.new_chat_members:
         user_id = member.id
         
-        # Verifica se tem assinatura ativa
-        usuario = database.get_usuario(user_id)
-        
-        if not usuario or not usuario.ativo:
-            # Remove do grupo se não tiver assinatura
-            try:
-                await context.bot.ban_chat_member(config.GROUP_ID, user_id)
-                await context.bot.unban_chat_member(config.GROUP_ID, user_id)
-                await update.message.reply_text(
-                    f"❌ {member.mention_html()} foi removido. "
-                    "É necessário ter uma assinatura ativa para entrar no grupo.",
-                    parse_mode='HTML'
-                )
-            except Exception as e:
-                logger.error(f"Erro ao remover membro: {e}")
-        else:
-            # Boas-vindas
+        # Se for no grupo de prévias (gratuito)
+        if chat_id == config.GRUPO_PREVIAS_ID and config.GRUPO_PREVIAS_ID != 0:
+            # Boas-vindas com marketing dos planos VIP
+            mensagem = config.MENSAGEM_BEM_VINDO_PREVIAS.format(
+                plano_fotos=config.PLANO_FOTOS['valor'],
+                plano_completo=config.PLANO_COMPLETO['valor']
+            )
             await update.message.reply_text(
-                f"🌟 Bem-vindo {member.mention_html()} ao Grupo VIP!\n\n"
-                f"{config.MENSAGEM_BEM_VINDO}",
+                f"👋 {member.mention_html()}\n\n{mensagem}",
                 parse_mode='HTML'
             )
+        
+        # Se for no grupo VIP (pago)
+        elif chat_id == config.GROUP_ID and config.GROUP_ID != 0:
+            # Verifica se tem assinatura ativa
+            usuario = database.get_usuario(user_id)
+            
+            if not usuario or not usuario.ativo:
+                # Remove do grupo se não tiver assinatura
+                try:
+                    await context.bot.ban_chat_member(config.GROUP_ID, user_id)
+                    await context.bot.unban_chat_member(config.GROUP_ID, user_id)
+                    await update.message.reply_text(
+                        f"❌ {member.mention_html()} foi removido. "
+                        "É necessário ter uma assinatura ativa para entrar no grupo.",
+                        parse_mode='HTML'
+                    )
+                except Exception as e:
+                    logger.error(f"Erro ao remover membro: {e}")
+            else:
+                # Boas-vindas
+                await update.message.reply_text(
+                    f"🌟 Bem-vindo {member.mention_html()} ao Grupo VIP!\n\n"
+                    f"{config.MENSAGEM_BEM_VINDO}",
+                    parse_mode='HTML'
+                )
 
 
 def main():
@@ -387,9 +428,14 @@ def main():
     
     # Handlers
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("planos", planos))
     application.add_handler(CommandHandler("stats", admin_stats))
     application.add_handler(CommandHandler("aprovar", verificar_pagamento_manual))
     application.add_handler(CallbackQueryHandler(callback_handler))
+    
+    # Handler para novos membros
+    from telegram.ext import MessageHandler, filters
+    application.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, novo_membro))
     
     # Inicia verificações automáticas
     iniciar_verificacoes_automaticas(application.bot)
