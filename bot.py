@@ -420,6 +420,17 @@ async def enviar_previa(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+async def post_init(application):
+    """Executa após o bot iniciar - envia primeira divulgação"""
+    from scheduler import divulgar_planos_previas_async
+    
+    logger.info("📢 Enviando primeira divulgação ao iniciar o bot...")
+    try:
+        await divulgar_planos_previas_async(application.bot)
+    except Exception as e:
+        logger.error(f"Erro ao enviar primeira divulgação: {e}")
+
+
 async def novo_membro(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Gerencia novos membros no grupo"""
     chat_id = update.effective_chat.id
@@ -471,7 +482,7 @@ def main():
     database.init_db()
     
     # Cria aplicação
-    application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
+    application = Application.builder().token(config.TELEGRAM_BOT_TOKEN).post_init(post_init).build()
     
     # Handlers
     application.add_handler(CommandHandler("start", start))

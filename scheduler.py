@@ -266,11 +266,3 @@ def iniciar_verificacoes_automaticas(bot):
     logger.info("   - Avisos de vencimento: diariamente às 10h")
     logger.info("   - Verificação de pagamentos: a cada 30 minutos")
     logger.info("   - Divulgação de planos (prévias): a cada 3 horas")
-    
-    # Envia a primeira divulgação imediatamente ao iniciar
-    logger.info("📢 Enviando primeira divulgação ao iniciar o bot...")
-    try:
-        # Cria uma task assíncrona para enviar a primeira divulgação
-        asyncio.create_task(divulgar_planos_previas_async(bot))
-    except Exception as e:
-        logger.error(f"Erro ao enviar primeira divulgação: {e}")

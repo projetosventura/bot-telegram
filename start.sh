@@ -1,7 +1,4 @@
 #!/bin/bash
 
-# Inicia o webhook em background
-gunicorn -w 2 -b 0.0.0.0:$PORT webhook:app &
-
-# Inicia o bot
+# Inicia apenas o bot (o bot já verifica pagamentos automaticamente a cada 30 minutos)
 python bot.py
