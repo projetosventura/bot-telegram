@@ -17,8 +17,11 @@ if not TELEGRAM_BOT_TOKEN:
     raise ValueError("TELEGRAM_BOT_TOKEN não configurado!")
     
 ADMIN_USER_ID = int(os.getenv('ADMIN_USER_ID', 0))
-GROUP_ID = int(os.getenv('GROUP_ID', 0))
-CANAL_ID = int(os.getenv('CANAL_ID', 0))  # ID do canal VIP (opcional)
+GROUP_ID = int(os.getenv('GROUP_ID', 0))  # Grupo para conversa (opcional)
+
+# Canais por plano
+CANAL_FOTOS_ID = int(os.getenv('CANAL_FOTOS_ID', 0))  # Canal de fotos (Plano Fotos e Completo)
+CANAL_COMPLETO_ID = int(os.getenv('CANAL_COMPLETO_ID', 0))  # Canal de vídeos (apenas Plano Completo)
 
 # Mercado Pago
 MERCADO_PAGO_ACCESS_TOKEN = os.getenv('MERCADO_PAGO_ACCESS_TOKEN')

@@ -268,31 +268,47 @@ async def verificar_pagamento_manual(update: Update, context: ContextTypes.DEFAU
             duracao_dias=plano_info['duracao_dias']
         )
         
-        # Adiciona ao grupo e canal
+        # Adiciona ao grupo e canais baseado no plano
         links = []
         try:
-            # Link do grupo
-            if config.GROUP_ID:
-                chat_member = await context.bot.get_chat_member(config.GROUP_ID, telegram_id)
-                if chat_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
-                    invite_link = await context.bot.create_chat_invite_link(
-                        config.GROUP_ID,
-                        member_limit=1
-                    )
-                    links.append(f"🔗 Grupo VIP: {invite_link.invite_link}")
-            
-            # Link do canal (se configurado)
-            if config.CANAL_ID and config.CANAL_ID != 0:
+            # Link do grupo (ambos os planos)
+            if config.GROUP_ID and config.GROUP_ID != 0:
                 try:
-                    canal_member = await context.bot.get_chat_member(config.CANAL_ID, telegram_id)
-                    if canal_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
-                        canal_invite = await context.bot.create_chat_invite_link(
-                            config.CANAL_ID,
+                    chat_member = await context.bot.get_chat_member(config.GROUP_ID, telegram_id)
+                    if chat_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
+                        invite_link = await context.bot.create_chat_invite_link(
+                            config.GROUP_ID,
                             member_limit=1
                         )
-                        links.append(f"📢 Canal VIP: {canal_invite.invite_link}")
+                        links.append(f"👥 Grupo VIP: {invite_link.invite_link}")
                 except Exception as e:
-                    logger.error(f"Erro ao gerar link do canal: {e}")
+                    logger.error(f"Erro ao gerar link do grupo: {e}")
+            
+            # Canal de Fotos (ambos os planos)
+            if config.CANAL_FOTOS_ID and config.CANAL_FOTOS_ID != 0:
+                try:
+                    canal_member = await context.bot.get_chat_member(config.CANAL_FOTOS_ID, telegram_id)
+                    if canal_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
+                        canal_invite = await context.bot.create_chat_invite_link(
+                            config.CANAL_FOTOS_ID,
+                            member_limit=1
+                        )
+                        links.append(f"📸 Canal de Fotos VIP: {canal_invite.invite_link}")
+                except Exception as e:
+                    logger.error(f"Erro ao gerar link do canal de fotos: {e}")
+            
+            # Canal Completo (apenas Plano Completo)
+            if plano == 'completo' and config.CANAL_COMPLETO_ID and config.CANAL_COMPLETO_ID != 0:
+                try:
+                    canal_completo_member = await context.bot.get_chat_member(config.CANAL_COMPLETO_ID, telegram_id)
+                    if canal_completo_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
+                        canal_completo_invite = await context.bot.create_chat_invite_link(
+                            config.CANAL_COMPLETO_ID,
+                            member_limit=1
+                        )
+                        links.append(f"🎬 Canal Completo (Fotos + Vídeos): {canal_completo_invite.invite_link}")
+                except Exception as e:
+                    logger.error(f"Erro ao gerar link do canal completo: {e}")
             
             if links:
                 mensagem_links = "✅ Usuário aprovado!\n\n" + "\n\n".join(links)

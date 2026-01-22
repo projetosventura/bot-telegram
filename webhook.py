@@ -45,29 +45,43 @@ def webhook():
                 duracao_dias=plano_info['duracao_dias']
             )
             
-            # Gera links de convite
+            # Gera links de convite baseado no plano
             from telegram import InlineKeyboardButton, InlineKeyboardMarkup
             
             keyboard = []
             
-            # Link do grupo
+            # Link do grupo (ambos os planos)
             if config.GROUP_ID and config.GROUP_ID != 0:
-                invite_link = telegram_bot.create_chat_invite_link(
-                    config.GROUP_ID,
-                    member_limit=1
-                )
-                keyboard.append([InlineKeyboardButton("👥 Entrar no Grupo VIP", url=invite_link.invite_link)])
-            
-            # Link do canal (se configurado)
-            if config.CANAL_ID and config.CANAL_ID != 0:
                 try:
-                    canal_invite = telegram_bot.create_chat_invite_link(
-                        config.CANAL_ID,
+                    invite_link = telegram_bot.create_chat_invite_link(
+                        config.GROUP_ID,
                         member_limit=1
                     )
-                    keyboard.append([InlineKeyboardButton("📢 Entrar no Canal VIP", url=canal_invite.invite_link)])
+                    keyboard.append([InlineKeyboardButton("👥 Entrar no Grupo VIP", url=invite_link.invite_link)])
                 except Exception as e:
-                    logger.error(f"Erro ao gerar link do canal: {e}")
+                    logger.error(f"Erro ao gerar link do grupo: {e}")
+            
+            # Canal de Fotos (ambos os planos têm acesso)
+            if config.CANAL_FOTOS_ID and config.CANAL_FOTOS_ID != 0:
+                try:
+                    canal_fotos_invite = telegram_bot.create_chat_invite_link(
+                        config.CANAL_FOTOS_ID,
+                        member_limit=1
+                    )
+                    keyboard.append([InlineKeyboardButton("📸 Entrar no Canal de Fotos VIP", url=canal_fotos_invite.invite_link)])
+                except Exception as e:
+                    logger.error(f"Erro ao gerar link do canal de fotos: {e}")
+            
+            # Canal Completo (apenas Plano Completo)
+            if plano == 'completo' and config.CANAL_COMPLETO_ID and config.CANAL_COMPLETO_ID != 0:
+                try:
+                    canal_completo_invite = telegram_bot.create_chat_invite_link(
+                        config.CANAL_COMPLETO_ID,
+                        member_limit=1
+                    )
+                    keyboard.append([InlineKeyboardButton("🎬 Entrar no Canal Completo (Fotos + Vídeos)", url=canal_completo_invite.invite_link)])
+                except Exception as e:
+                    logger.error(f"Erro ao gerar link do canal completo: {e}")
             
             reply_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
             
