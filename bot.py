@@ -218,7 +218,7 @@ async def planos(update: Update, context: ContextTypes.DEFAULT_TYPE):
 💳 *Como assinar?*
 Envie /start no privado do bot para escolher seu plano e realizar o pagamento!
 
-👉 Clique aqui para iniciar: @{(await context.bot.get_me()).username}
+👉 Clique aqui para iniciar: @VIP_Mel_bot
 """
     
     await update.message.reply_text(mensagem, parse_mode='Markdown')
