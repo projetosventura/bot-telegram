@@ -96,7 +96,7 @@ def webhook():
             
             plano_info = config.PLANO_FOTOS if plano == 'fotos' else config.PLANO_COMPLETO
             
-            # Cria/atualiza usuário
+            # Cria/atualiza usuário (retorna dict)
             usuario = database.criar_usuario(
                 telegram_id=telegram_id,
                 username=None,
@@ -105,8 +105,8 @@ def webhook():
                 duracao_dias=plano_info['duracao_dias']
             )
             
-            # Extrai data de vencimento (antes de fechar a sessão)
-            data_vencimento_str = usuario.data_vencimento.strftime('%d/%m/%Y')
+            # Formata data de vencimento
+            data_vencimento_str = usuario['data_vencimento'].strftime('%d/%m/%Y')
             
             # Processa de forma assíncrona
             asyncio.run(processar_pagamento_aprovado(telegram_id, plano, plano_info, data_vencimento_str))

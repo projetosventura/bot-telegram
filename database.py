@@ -85,7 +85,7 @@ def get_session():
 
 
 def criar_usuario(telegram_id, username, nome, plano, duracao_dias=30):
-    """Cria um novo usuário"""
+    """Cria um novo usuário e retorna dict com os dados"""
     session = get_session()
     try:
         # Verifica se usuário já existe
@@ -110,7 +110,16 @@ def criar_usuario(telegram_id, username, nome, plano, duracao_dias=30):
             session.add(usuario)
         
         session.commit()
-        return usuario
+        
+        # Extrai dados antes de fechar a sessão
+        usuario_dict = {
+            'telegram_id': usuario.telegram_id,
+            'plano': usuario.plano,
+            'data_vencimento': usuario.data_vencimento,
+            'ativo': usuario.ativo
+        }
+        
+        return usuario_dict
     except Exception as e:
         session.rollback()
         raise e
