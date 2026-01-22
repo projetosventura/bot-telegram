@@ -373,6 +373,53 @@ async def verificar_pagamento_manual(update: Update, context: ContextTypes.DEFAU
         await update.message.reply_text(f"❌ Erro: {str(e)}")
 
 
+async def enviar_previa(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Comando admin para enviar mensagem/foto no canal de prévias"""
+    if update.effective_user.id != config.ADMIN_USER_ID:
+        await update.message.reply_text("❌ Você não tem permissão para este comando.")
+        return
+    
+    if config.GRUPO_PREVIAS_ID == 0:
+        await update.message.reply_text("❌ Canal de prévias não configurado.")
+        return
+    
+    # Se for resposta a uma mensagem com foto/vídeo
+    if update.message.reply_to_message:
+        try:
+            # Copia a mensagem para o canal de prévias
+            await update.message.reply_to_message.copy(
+                chat_id=config.GRUPO_PREVIAS_ID
+            )
+            await update.message.reply_text("✅ Conteúdo enviado para o canal de prévias!")
+        except Exception as e:
+            logger.error(f"Erro ao enviar para canal de prévias: {e}")
+            await update.message.reply_text(f"❌ Erro ao enviar: {str(e)}")
+    
+    # Se for texto após o comando
+    elif len(context.args) > 0:
+        mensagem = ' '.join(context.args)
+        try:
+            await context.bot.send_message(
+                chat_id=config.GRUPO_PREVIAS_ID,
+                text=mensagem,
+                parse_mode='Markdown'
+            )
+            await update.message.reply_text("✅ Mensagem enviada para o canal de prévias!")
+        except Exception as e:
+            logger.error(f"Erro ao enviar mensagem: {e}")
+            await update.message.reply_text(f"❌ Erro ao enviar: {str(e)}")
+    
+    else:
+        await update.message.reply_text(
+            "📝 *Como usar o comando /enviar_previa:*\n\n"
+            "1️⃣ Responda a uma foto/vídeo/mensagem com /enviar_previa\n"
+            "   (o bot vai copiar para o canal de prévias)\n\n"
+            "2️⃣ Ou digite: /enviar_previa Sua mensagem aqui\n\n"
+            "Exemplo: /enviar_previa 🔥 Nova prévia disponível! Use /planos para ver os planos VIP",
+            parse_mode='Markdown'
+        )
+
+
 async def novo_membro(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Gerencia novos membros no grupo"""
     chat_id = update.effective_chat.id
@@ -431,6 +478,7 @@ def main():
     application.add_handler(CommandHandler("planos", planos))
     application.add_handler(CommandHandler("stats", admin_stats))
     application.add_handler(CommandHandler("aprovar", verificar_pagamento_manual))
+    application.add_handler(CommandHandler("enviar_previa", enviar_previa))
     application.add_handler(CallbackQueryHandler(callback_handler))
     
     # Handler para novos membros

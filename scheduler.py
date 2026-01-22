@@ -163,6 +163,47 @@ def verificar_pagamentos_pendentes(bot):
     logger.info(f"✅ {len(pagamentos_pendentes)} pagamentos verificados")
 
 
+def divulgar_planos_previas(bot):
+    """Envia mensagem automática divulgando os planos VIP no canal de prévias"""
+    if config.GRUPO_PREVIAS_ID == 0:
+        logger.warning("⚠️ Canal de prévias não configurado. Pulando divulgação.")
+        return
+    
+    logger.info("📢 Enviando divulgação dos planos VIP no canal de prévias...")
+    
+    try:
+        mensagem = f"""
+💎 *PLANOS VIP DISPONÍVEIS*
+
+📸 *Plano Fotos VIP* - R$ {config.PLANO_FOTOS['valor']:.2f}/mês
+   • Acesso a todas as fotos exclusivas
+   • Conteúdo atualizado diariamente
+   • Suporte prioritário
+
+🎬 *Plano Completo VIP* - R$ {config.PLANO_COMPLETO['valor']:.2f}/mês
+   • Tudo do Plano Fotos +
+   • Acesso a vídeos exclusivos
+   • Conteúdo em alta qualidade
+   • Lançamentos antecipados
+
+💳 *Como assinar?*
+Envie /start no privado do bot para escolher seu plano e realizar o pagamento!
+
+👉 Clique aqui para iniciar: @VIP_Mel_bot
+"""
+        
+        bot.send_message(
+            chat_id=config.GRUPO_PREVIAS_ID,
+            text=mensagem,
+            parse_mode='Markdown'
+        )
+        
+        logger.info("✅ Divulgação enviada com sucesso para o canal de prévias!")
+        
+    except Exception as e:
+        logger.error(f"❌ Erro ao enviar divulgação para canal de prévias: {e}")
+
+
 def iniciar_verificacoes_automaticas(bot):
     """Inicia o agendador de tarefas"""
     scheduler = BackgroundScheduler()
@@ -195,8 +236,25 @@ def iniciar_verificacoes_automaticas(bot):
         id='verificar_pagamentos'
     )
     
+    # Divulga planos VIP no canal de prévias a cada 3 horas
+    scheduler.add_job(
+        divulgar_planos_previas,
+        'interval',
+        hours=3,
+        args=[bot],
+        id='divulgar_planos'
+    )
+    
     scheduler.start()
     logger.info("⏰ Agendador de tarefas iniciado!")
     logger.info("   - Verificação de vencimentos: a cada 6 horas")
     logger.info("   - Avisos de vencimento: diariamente às 10h")
     logger.info("   - Verificação de pagamentos: a cada 30 minutos")
+    logger.info("   - Divulgação de planos (prévias): a cada 3 horas")
+    
+    # Envia a primeira divulgação imediatamente ao iniciar
+    logger.info("📢 Enviando primeira divulgação ao iniciar o bot...")
+    try:
+        divulgar_planos_previas(bot)
+    except Exception as e:
+        logger.error(f"Erro ao enviar primeira divulgação: {e}")
