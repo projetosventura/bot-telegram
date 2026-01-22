@@ -268,23 +268,40 @@ async def verificar_pagamento_manual(update: Update, context: ContextTypes.DEFAU
             duracao_dias=plano_info['duracao_dias']
         )
         
-        # Adiciona ao grupo
+        # Adiciona ao grupo e canal
+        links = []
         try:
-            chat_member = await context.bot.get_chat_member(config.GROUP_ID, telegram_id)
-            if chat_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
-                # Gera link de convite
-                invite_link = await context.bot.create_chat_invite_link(
-                    config.GROUP_ID,
-                    member_limit=1
-                )
-                await update.message.reply_text(
-                    f"✅ Usuário aprovado!\n\nEnvie este link para ele: {invite_link.invite_link}"
-                )
+            # Link do grupo
+            if config.GROUP_ID:
+                chat_member = await context.bot.get_chat_member(config.GROUP_ID, telegram_id)
+                if chat_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
+                    invite_link = await context.bot.create_chat_invite_link(
+                        config.GROUP_ID,
+                        member_limit=1
+                    )
+                    links.append(f"🔗 Grupo VIP: {invite_link.invite_link}")
+            
+            # Link do canal (se configurado)
+            if config.CANAL_ID and config.CANAL_ID != 0:
+                try:
+                    canal_member = await context.bot.get_chat_member(config.CANAL_ID, telegram_id)
+                    if canal_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
+                        canal_invite = await context.bot.create_chat_invite_link(
+                            config.CANAL_ID,
+                            member_limit=1
+                        )
+                        links.append(f"📢 Canal VIP: {canal_invite.invite_link}")
+                except Exception as e:
+                    logger.error(f"Erro ao gerar link do canal: {e}")
+            
+            if links:
+                mensagem_links = "✅ Usuário aprovado!\n\n" + "\n\n".join(links)
+                await update.message.reply_text(mensagem_links)
             else:
-                await update.message.reply_text("✅ Usuário aprovado e já está no grupo!")
+                await update.message.reply_text("✅ Usuário aprovado e já está no grupo/canal!")
         except Exception as e:
             logger.error(f"Erro ao verificar membro: {e}")
-            await update.message.reply_text("✅ Usuário aprovado! Adicione-o manualmente ao grupo.")
+            await update.message.reply_text("✅ Usuário aprovado! Adicione-o manualmente.")
         
         # Notifica o usuário
         try:

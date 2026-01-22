@@ -45,23 +45,41 @@ def webhook():
                 duracao_dias=plano_info['duracao_dias']
             )
             
-            # Gera link de convite
-            invite_link = telegram_bot.create_chat_invite_link(
-                config.GROUP_ID,
-                member_limit=1
-            )
-            
-            # Envia mensagem para o usuário
+            # Gera links de convite
             from telegram import InlineKeyboardButton, InlineKeyboardMarkup
             
-            keyboard = [[InlineKeyboardButton("🎉 Entrar no Grupo VIP", url=invite_link.invite_link)]]
-            reply_markup = InlineKeyboardMarkup(keyboard)
+            keyboard = []
+            
+            # Link do grupo
+            if config.GROUP_ID and config.GROUP_ID != 0:
+                invite_link = telegram_bot.create_chat_invite_link(
+                    config.GROUP_ID,
+                    member_limit=1
+                )
+                keyboard.append([InlineKeyboardButton("👥 Entrar no Grupo VIP", url=invite_link.invite_link)])
+            
+            # Link do canal (se configurado)
+            if config.CANAL_ID and config.CANAL_ID != 0:
+                try:
+                    canal_invite = telegram_bot.create_chat_invite_link(
+                        config.CANAL_ID,
+                        member_limit=1
+                    )
+                    keyboard.append([InlineKeyboardButton("📢 Entrar no Canal VIP", url=canal_invite.invite_link)])
+                except Exception as e:
+                    logger.error(f"Erro ao gerar link do canal: {e}")
+            
+            reply_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
             
             mensagem = config.MENSAGEM_PAGAMENTO_APROVADO.format(
                 plano=plano_info['nome'],
                 data_vencimento=usuario.data_vencimento.strftime('%d/%m/%Y')
             )
-            mensagem += "\n\nClique no botão abaixo para entrar no grupo:"
+            
+            if len(keyboard) > 1:
+                mensagem += "\n\n🎉 Clique nos botões abaixo para acessar:"
+            elif len(keyboard) == 1:
+                mensagem += "\n\n🎉 Clique no botão abaixo para acessar:"
             
             telegram_bot.send_message(
                 telegram_id,

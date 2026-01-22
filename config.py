@@ -18,6 +18,7 @@ if not TELEGRAM_BOT_TOKEN:
     
 ADMIN_USER_ID = int(os.getenv('ADMIN_USER_ID', 0))
 GROUP_ID = int(os.getenv('GROUP_ID', 0))
+CANAL_ID = int(os.getenv('CANAL_ID', 0))  # ID do canal VIP (opcional)
 
 # Mercado Pago
 MERCADO_PAGO_ACCESS_TOKEN = os.getenv('MERCADO_PAGO_ACCESS_TOKEN')
