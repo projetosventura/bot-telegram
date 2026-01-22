@@ -3,6 +3,7 @@ Agendador de Tarefas Automáticas
 Verifica vencimentos e envia avisos
 """
 import logging
+import asyncio
 from apscheduler.schedulers.background import BackgroundScheduler
 from telegram.constants import ChatMemberStatus
 import config
@@ -163,8 +164,8 @@ def verificar_pagamentos_pendentes(bot):
     logger.info(f"✅ {len(pagamentos_pendentes)} pagamentos verificados")
 
 
-def divulgar_planos_previas(bot):
-    """Envia mensagem automática divulgando os planos VIP no canal de prévias"""
+async def divulgar_planos_previas_async(bot):
+    """Envia mensagem automática divulgando os planos VIP no canal de prévias (async)"""
     if config.GRUPO_PREVIAS_ID == 0:
         logger.warning("⚠️ Canal de prévias não configurado. Pulando divulgação.")
         return
@@ -192,7 +193,7 @@ Envie /start no privado do bot para escolher seu plano e realizar o pagamento!
 👉 Clique aqui para iniciar: @VIP_Mel_bot
 """
         
-        bot.send_message(
+        await bot.send_message(
             chat_id=config.GRUPO_PREVIAS_ID,
             text=mensagem,
             parse_mode='Markdown'
@@ -202,6 +203,20 @@ Envie /start no privado do bot para escolher seu plano e realizar o pagamento!
         
     except Exception as e:
         logger.error(f"❌ Erro ao enviar divulgação para canal de prévias: {e}")
+
+
+def divulgar_planos_previas(bot):
+    """Wrapper síncrono para executar a função async no scheduler"""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # Se já existe um loop rodando, cria uma task
+            asyncio.create_task(divulgar_planos_previas_async(bot))
+        else:
+            # Se não, executa diretamente
+            loop.run_until_complete(divulgar_planos_previas_async(bot))
+    except Exception as e:
+        logger.error(f"❌ Erro ao executar divulgação: {e}")
 
 
 def iniciar_verificacoes_automaticas(bot):
@@ -255,6 +270,7 @@ def iniciar_verificacoes_automaticas(bot):
     # Envia a primeira divulgação imediatamente ao iniciar
     logger.info("📢 Enviando primeira divulgação ao iniciar o bot...")
     try:
-        divulgar_planos_previas(bot)
+        # Cria uma task assíncrona para enviar a primeira divulgação
+        asyncio.create_task(divulgar_planos_previas_async(bot))
     except Exception as e:
         logger.error(f"Erro ao enviar primeira divulgação: {e}")
