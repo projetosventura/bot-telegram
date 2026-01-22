@@ -21,6 +21,7 @@ telegram_bot = Bot(token=config.TELEGRAM_BOT_TOKEN)
 async def processar_pagamento_aprovado(telegram_id, plano, plano_info, data_vencimento_str):
     """Processa pagamento aprovado de forma assíncrona"""
     from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+    from telegram.constants import ChatMemberStatus as CMS
     
     keyboard = []
     
@@ -35,9 +36,17 @@ async def processar_pagamento_aprovado(telegram_id, plano, plano_info, data_venc
         except Exception as e:
             logger.error(f"Erro ao gerar link do grupo: {e}")
     
-    # Canal de Fotos (ambos os planos têm acesso)
+    # Canal de Fotos (ambos os planos têm acesso) - sempre gera link
     if config.CANAL_FOTOS_ID and config.CANAL_FOTOS_ID != 0:
         try:
+            # Se estiver banido, desbanir primeiro
+            try:
+                canal_member = await telegram_bot.get_chat_member(config.CANAL_FOTOS_ID, telegram_id)
+                if canal_member.status == CMS.KICKED:
+                    await telegram_bot.unban_chat_member(config.CANAL_FOTOS_ID, telegram_id)
+            except:
+                pass
+            
             canal_fotos_invite = await telegram_bot.create_chat_invite_link(
                 config.CANAL_FOTOS_ID,
                 member_limit=1
@@ -46,9 +55,17 @@ async def processar_pagamento_aprovado(telegram_id, plano, plano_info, data_venc
         except Exception as e:
             logger.error(f"Erro ao gerar link do canal de fotos: {e}")
     
-    # Canal Completo (apenas Plano Completo)
+    # Canal Completo (apenas Plano Completo) - sempre gera link
     if plano == 'completo' and config.CANAL_COMPLETO_ID and config.CANAL_COMPLETO_ID != 0:
         try:
+            # Se estiver banido, desbanir primeiro
+            try:
+                canal_member = await telegram_bot.get_chat_member(config.CANAL_COMPLETO_ID, telegram_id)
+                if canal_member.status == CMS.KICKED:
+                    await telegram_bot.unban_chat_member(config.CANAL_COMPLETO_ID, telegram_id)
+            except:
+                pass
+            
             canal_completo_invite = await telegram_bot.create_chat_invite_link(
                 config.CANAL_COMPLETO_ID,
                 member_limit=1

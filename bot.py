@@ -284,29 +284,41 @@ async def verificar_pagamento_manual(update: Update, context: ContextTypes.DEFAU
                 except Exception as e:
                     logger.error(f"Erro ao gerar link do grupo: {e}")
             
-            # Canal de Fotos (ambos os planos)
+            # Canal de Fotos (ambos os planos) - sempre gera link
             if config.CANAL_FOTOS_ID and config.CANAL_FOTOS_ID != 0:
                 try:
-                    canal_member = await context.bot.get_chat_member(config.CANAL_FOTOS_ID, telegram_id)
-                    if canal_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
-                        canal_invite = await context.bot.create_chat_invite_link(
-                            config.CANAL_FOTOS_ID,
-                            member_limit=1
-                        )
-                        links.append(f"📸 Canal de Fotos VIP: {canal_invite.invite_link}")
+                    # Se estiver banido, desbanir primeiro
+                    try:
+                        canal_member = await context.bot.get_chat_member(config.CANAL_FOTOS_ID, telegram_id)
+                        if canal_member.status == ChatMemberStatus.KICKED:
+                            await context.bot.unban_chat_member(config.CANAL_FOTOS_ID, telegram_id)
+                    except:
+                        pass
+                    
+                    canal_invite = await context.bot.create_chat_invite_link(
+                        config.CANAL_FOTOS_ID,
+                        member_limit=1
+                    )
+                    links.append(f"📸 Canal de Fotos VIP: {canal_invite.invite_link}")
                 except Exception as e:
                     logger.error(f"Erro ao gerar link do canal de fotos: {e}")
             
-            # Canal Completo (apenas Plano Completo)
+            # Canal Completo (apenas Plano Completo) - sempre gera link
             if plano == 'completo' and config.CANAL_COMPLETO_ID and config.CANAL_COMPLETO_ID != 0:
                 try:
-                    canal_completo_member = await context.bot.get_chat_member(config.CANAL_COMPLETO_ID, telegram_id)
-                    if canal_completo_member.status in [ChatMemberStatus.LEFT, ChatMemberStatus.KICKED]:
-                        canal_completo_invite = await context.bot.create_chat_invite_link(
-                            config.CANAL_COMPLETO_ID,
-                            member_limit=1
-                        )
-                        links.append(f"🎬 Canal Completo (Fotos + Vídeos): {canal_completo_invite.invite_link}")
+                    # Se estiver banido, desbanir primeiro
+                    try:
+                        canal_completo_member = await context.bot.get_chat_member(config.CANAL_COMPLETO_ID, telegram_id)
+                        if canal_completo_member.status == ChatMemberStatus.KICKED:
+                            await context.bot.unban_chat_member(config.CANAL_COMPLETO_ID, telegram_id)
+                    except:
+                        pass
+                    
+                    canal_completo_invite = await context.bot.create_chat_invite_link(
+                        config.CANAL_COMPLETO_ID,
+                        member_limit=1
+                    )
+                    links.append(f"🎬 Canal Completo (Fotos + Vídeos): {canal_completo_invite.invite_link}")
                 except Exception as e:
                     logger.error(f"Erro ao gerar link do canal completo: {e}")
             
