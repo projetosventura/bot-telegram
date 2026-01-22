@@ -190,7 +190,7 @@ async def divulgar_planos_previas_async(bot):
 💳 *Como assinar?*
 Envie /start no privado do bot para escolher seu plano e realizar o pagamento!
 
-👉 Clique aqui para iniciar: @VIP_Mel_bot
+👉 Clique aqui para iniciar: @VIP\_Mel\_bot
 """
         
         await bot.send_message(
