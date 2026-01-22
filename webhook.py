@@ -18,9 +18,69 @@ logger = logging.getLogger(__name__)
 telegram_bot = Bot(token=config.TELEGRAM_BOT_TOKEN)
 
 
+async def processar_pagamento_aprovado(telegram_id, plano, plano_info, data_vencimento_str):
+    """Processa pagamento aprovado de forma assíncrona"""
+    from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+    
+    keyboard = []
+    
+    # Link do grupo (ambos os planos)
+    if config.GROUP_ID and config.GROUP_ID != 0:
+        try:
+            invite_link = await telegram_bot.create_chat_invite_link(
+                config.GROUP_ID,
+                member_limit=1
+            )
+            keyboard.append([InlineKeyboardButton("👥 Entrar no Grupo VIP", url=invite_link.invite_link)])
+        except Exception as e:
+            logger.error(f"Erro ao gerar link do grupo: {e}")
+    
+    # Canal de Fotos (ambos os planos têm acesso)
+    if config.CANAL_FOTOS_ID and config.CANAL_FOTOS_ID != 0:
+        try:
+            canal_fotos_invite = await telegram_bot.create_chat_invite_link(
+                config.CANAL_FOTOS_ID,
+                member_limit=1
+            )
+            keyboard.append([InlineKeyboardButton("📸 Canal de Fotos VIP", url=canal_fotos_invite.invite_link)])
+        except Exception as e:
+            logger.error(f"Erro ao gerar link do canal de fotos: {e}")
+    
+    # Canal Completo (apenas Plano Completo)
+    if plano == 'completo' and config.CANAL_COMPLETO_ID and config.CANAL_COMPLETO_ID != 0:
+        try:
+            canal_completo_invite = await telegram_bot.create_chat_invite_link(
+                config.CANAL_COMPLETO_ID,
+                member_limit=1
+            )
+            keyboard.append([InlineKeyboardButton("🎬 Canal Completo (Fotos + Vídeos)", url=canal_completo_invite.invite_link)])
+        except Exception as e:
+            logger.error(f"Erro ao gerar link do canal completo: {e}")
+    
+    reply_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
+    
+    mensagem = config.MENSAGEM_PAGAMENTO_APROVADO.format(
+        plano=plano_info['nome'],
+        data_vencimento=data_vencimento_str
+    )
+    
+    if len(keyboard) > 1:
+        mensagem += "\n\n🎉 Clique nos botões abaixo para acessar:"
+    elif len(keyboard) == 1:
+        mensagem += "\n\n🎉 Clique no botão abaixo para acessar:"
+    
+    await telegram_bot.send_message(
+        telegram_id,
+        mensagem,
+        reply_markup=reply_markup
+    )
+
+
 @app.route('/webhook', methods=['POST'])
 def webhook():
     """Recebe notificações do Mercado Pago"""
+    import asyncio
+    
     try:
         data = request.get_json()
         logger.info(f"Webhook recebido: {data}")
@@ -45,61 +105,11 @@ def webhook():
                 duracao_dias=plano_info['duracao_dias']
             )
             
-            # Gera links de convite baseado no plano
-            from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+            # Extrai data de vencimento (antes de fechar a sessão)
+            data_vencimento_str = usuario.data_vencimento.strftime('%d/%m/%Y')
             
-            keyboard = []
-            
-            # Link do grupo (ambos os planos)
-            if config.GROUP_ID and config.GROUP_ID != 0:
-                try:
-                    invite_link = telegram_bot.create_chat_invite_link(
-                        config.GROUP_ID,
-                        member_limit=1
-                    )
-                    keyboard.append([InlineKeyboardButton("👥 Entrar no Grupo VIP", url=invite_link.invite_link)])
-                except Exception as e:
-                    logger.error(f"Erro ao gerar link do grupo: {e}")
-            
-            # Canal de Fotos (ambos os planos têm acesso)
-            if config.CANAL_FOTOS_ID and config.CANAL_FOTOS_ID != 0:
-                try:
-                    canal_fotos_invite = telegram_bot.create_chat_invite_link(
-                        config.CANAL_FOTOS_ID,
-                        member_limit=1
-                    )
-                    keyboard.append([InlineKeyboardButton("📸 Entrar no Canal de Fotos VIP", url=canal_fotos_invite.invite_link)])
-                except Exception as e:
-                    logger.error(f"Erro ao gerar link do canal de fotos: {e}")
-            
-            # Canal Completo (apenas Plano Completo)
-            if plano == 'completo' and config.CANAL_COMPLETO_ID and config.CANAL_COMPLETO_ID != 0:
-                try:
-                    canal_completo_invite = telegram_bot.create_chat_invite_link(
-                        config.CANAL_COMPLETO_ID,
-                        member_limit=1
-                    )
-                    keyboard.append([InlineKeyboardButton("🎬 Entrar no Canal Completo (Fotos + Vídeos)", url=canal_completo_invite.invite_link)])
-                except Exception as e:
-                    logger.error(f"Erro ao gerar link do canal completo: {e}")
-            
-            reply_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
-            
-            mensagem = config.MENSAGEM_PAGAMENTO_APROVADO.format(
-                plano=plano_info['nome'],
-                data_vencimento=usuario.data_vencimento.strftime('%d/%m/%Y')
-            )
-            
-            if len(keyboard) > 1:
-                mensagem += "\n\n🎉 Clique nos botões abaixo para acessar:"
-            elif len(keyboard) == 1:
-                mensagem += "\n\n🎉 Clique no botão abaixo para acessar:"
-            
-            telegram_bot.send_message(
-                telegram_id,
-                mensagem,
-                reply_markup=reply_markup
-            )
+            # Processa de forma assíncrona
+            asyncio.run(processar_pagamento_aprovado(telegram_id, plano, plano_info, data_vencimento_str))
             
             logger.info(f"✅ Pagamento processado via webhook para {telegram_id}")
         
